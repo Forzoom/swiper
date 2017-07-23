@@ -90,15 +90,26 @@
             },
             onTouchSlide() {
                 const vm = this;
-                vm.$nextTick(function() {
-                    vm.translate = range(round(vm.translate, 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
-                });
+                vm.translate = range(round(vm.translate, 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                vm.onTouchRange();
             },
             onTouchFling({ speedX, }) {
                 const vm = this;
-                vm.$nextTick(function() {
-                    vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
-                });
+                vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                vm.onTouchRange();
+            },
+            onTouchRange() {
+                const vm = this;
+                if (vm.translate === 0 || vm.translate === -vm.width * (vm.preparedImages.length - 1)) {
+                    vm.$nextTick(function() {
+                        vm.transition = false;
+                        if (vm.translate === 0) {
+                            vm.translate = -vm.width * (vm.preparedImages.length - 2)
+                        } else if (vm.translate === -vm.width * (vm.preparedImages.length - 1)) {
+                            vm.translate = -vm.width;
+                        }
+                    });
+                }
             },
             /**
              * 直接选取window的宽度
@@ -107,6 +118,10 @@
                 this.width = window.innerWidth;
                 this.isMount = true;
             },
+        },
+        mounted() {
+            this.width = window.innerWidth;
+            this.translate = -window.innerWidth;
         },
     };
 </script>
