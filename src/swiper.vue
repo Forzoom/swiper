@@ -2,9 +2,13 @@
     <div class="ro-swiper-container">
         <Touch
             @touch-down="onTouchDown"
-            @touch-move="onTouchMove">
+            @touch-move="onTouchMove"
+            @touch-up="onTouchUp"
+            @touch-slide="onTouchSlide"
+            @touch-fling="onTouchFling">
             <div
                 class="ro-swiper"
+                :class="{transition: transition}"
                 :style="{width: preparedImages.length * 100 + '%',transform: 'translateX(' + translate + 'px)'}">
                 <div 
                     class="ro-swiper-content-wrap" 
@@ -23,6 +27,10 @@
      */
     function range(val, min, max) {
         return Math.max(Math.min(val, max), min);
+    }
+
+    function round(value, min, step) {
+        return min + Math.round((value - min) / step) * step;
     }
 
     import Touch from '@forzoom/touch';
@@ -52,6 +60,7 @@
                 width: 0,
                 translate: 0,
                 isMount: false,
+                transition: false,
             };
         },
         computed: {
@@ -70,10 +79,26 @@
                 if (!this.isMount) {
                     this.mount();
                 }
+                this.transition = false;
             },
             onTouchMove({ x, y, }) {
                 // 需求屏幕的宽度
                 this.translate = range(this.translate + x, -this.width * (this.preparedImages.length - 1), 0);
+            },
+            onTouchUp(startPos, currentPos) {
+                this.transition = true;
+            },
+            onTouchSlide() {
+                const vm = this;
+                vm.$nextTick(function() {
+                    vm.translate = range(round(vm.translate, 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                });
+            },
+            onTouchFling({ speedX, }) {
+                const vm = this;
+                vm.$nextTick(function() {
+                    vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                });
             },
             /**
              * 直接选取window的宽度
@@ -87,6 +112,9 @@
 </script>
 
 <style>
+    .ro-swiper.transition {
+        transition: transform 0.3s;
+    }
     .ro-swiper-content-wrap {
         display: inline-block;
         top: 0;
