@@ -4,20 +4,12 @@ const webpack = require('webpack')
 process.env.NODE_ENV = 'production'; // 对于vue-loader代码有效
 
 module.exports = {
-	entry: './index.js', // 这里竟然这样写
+	entry: './src/index.js', // 这里竟然这样写
 	output: {
 		path: path.resolve(__dirname, '../dist'),
 		filename: 'swiper.min.js',
 		library: 'swiper',
 		libraryTarget: 'umd',
-	},
-	resolve: {
-		alias: {
-			vue: 'vue/dist/vue.js'
-		}
-	},
-	externals: {
-		vue: 'vue',
 	},
 	module: {
 		rules: [
@@ -28,7 +20,7 @@ module.exports = {
 			}, {
 				test: /\.js$/,
 				loader: 'babel-loader',
-				include: [path.resolve(__dirname, '../src')]
+				include: [path.resolve(__dirname, '../src'), path.resolve(__dirname, '../node_modules/vue/src/core/vdom')]
 			}
 		]
 	},
@@ -42,4 +34,5 @@ module.exports = {
 			}
 		}),
 	],
+	watch: true,
 }
