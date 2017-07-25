@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div class="ro-swiper-container">
         <Touch
             @touch-down="onTouchDown"
@@ -19,9 +19,17 @@
             </div>
         </Touch>
     </div>
-</template>
+</template> -->
 
 <script>
+
+    import {
+        _Vue,
+    } from './install';
+    import {
+        cloneVNode,
+    } from 'vue/src/core/vdom/vnode.js';
+
     /**
      * 将val限定在一定的范围之内
      */
@@ -29,8 +37,11 @@
         return Math.max(Math.min(val, max), min);
     }
 
-    function round(value, min, step) {
-        return min + Math.round((value - min) / step) * step;
+    /**
+     * 
+     */
+    function round(val, min, step) {
+        return min + Math.round((val - min) / step) * step;
     }
 
     import Touch from '@forzoom/touch';
@@ -48,30 +59,52 @@
                 default: 3000,
             },
             /**
-             * 所有需要展示的图片
+             * 是否自动播放
              */
-            images: {
-                required: true,
-                type: Array,
+            autoplay: {
+                type: Boolean,
+                default: false,
             },
         },
         data() {
             return {
+                /**
+                 * 每张图片的宽度
+                 */
                 width: 0,
+                /**
+                 * 移动的距离
+                 */
                 translate: 0,
+                /**
+                 * 当前是否已经锚定
+                 */
                 isMount: false,
+                /**
+                 * 过渡效果是否启用
+                 */
                 transition: false,
             };
         },
         computed: {
-            /**
-             * 添加头尾用于过渡的images
-             */
-            preparedImages() {
-                const images = this.images.slice(0);
-                images.unshift(this.images[this.images.length - 1]);
-                images.push(this.images[0]);
-                return images;
+            rangeMax() {
+                return 0;
+            },
+            rangeMin() {
+                return -this.width * (this.slides.length - 1); // 这里原本是 - 1，但是需要前置和后置内容，所以需要 + 2，最终就是 + 1
+            },
+            count() {
+                return this.slides.length;
+            },
+            slides() {
+                const slides = this.$slots.default.filter(function(vnode) {
+                    return vnode != null && vnode.tag != null && vnode.tag.indexOf('SwiperSlide') != -1;
+                });
+                const firstVNode = cloneVNode(slides[0]);
+                const lastVNode = cloneVNode(slides[slides.length - 1]);
+                slides.push(firstVNode);
+                slides.unshift(lastVNode);
+                return slides;
             },
         },
         methods: {
@@ -83,29 +116,29 @@
             },
             onTouchMove({ x, y, }) {
                 // 需求屏幕的宽度
-                this.translate = range(this.translate + x, -this.width * (this.preparedImages.length - 1), 0);
+                this.translate = range(this.translate + x, this.rangeMin, 0);
             },
             onTouchUp(startPos, currentPos) {
                 this.transition = true;
             },
             onTouchSlide() {
                 const vm = this;
-                vm.translate = range(round(vm.translate, 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                vm.translate = range(round(vm.translate, 0, vm.width), vm.rangeMin, 0);
                 vm.onTouchRange();
             },
             onTouchFling({ speedX, }) {
                 const vm = this;
-                vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), -vm.width * (vm.preparedImages.length - 1), 0);
+                vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), vm.rangeMin, 0);
                 vm.onTouchRange();
             },
             onTouchRange() {
                 const vm = this;
-                if (vm.translate === 0 || vm.translate === -vm.width * (vm.preparedImages.length - 1)) {
+                if (vm.translate === 0 || vm.translate === vm.rangeMin) {
                     vm.$nextTick(function() {
                         vm.transition = false;
                         if (vm.translate === 0) {
-                            vm.translate = -vm.width * (vm.preparedImages.length - 2)
-                        } else if (vm.translate === -vm.width * (vm.preparedImages.length - 1)) {
+                            vm.translate = -vm.width * (this.slides.length - 2);
+                        } else if (vm.translate === vm.rangeMin) {
                             vm.translate = -vm.width;
                         }
                     });
@@ -123,16 +156,47 @@
             this.width = window.innerWidth;
             this.translate = -window.innerWidth;
         },
+        render(h) {
+            const slides = this.slides;
+            slides.forEach(function(vnode) {
+                if (vnode.data.style) {
+                    vnode.data.style.width = 1 / slides.length * 100 + '%';
+                } else {
+                    vnode.data.style = {
+                        width: 1 / slides.length * 100 + '%',
+                    };
+                }
+            });
+
+            // 创建touch
+            const touch = h('Touch', {
+                on: {
+                    'touch-down': this.onTouchDown,
+                    'touch-move': this.onTouchMove,
+                    'touch-up': this.onTouchUp,
+                    'touch-slide': this.onTouchSlide,
+                    'touch-fling': this.onTouchFling,
+                },
+            }, [
+                h('div', {
+                    'class': ['ro-swiper', {transition: this.transition}],
+                    style: {
+                        width: (slides.length * 100) + '%',
+                        transform: 'translateX(' + this.translate + 'px)',
+                    },
+                }, slides),
+            ]);
+            const el = h('div', {
+                'class': ['ro-swiper-container'],
+            }, [touch]);
+            return el;
+        },
     };
 </script>
 
 <style>
     .ro-swiper.transition {
         transition: transform 0.3s;
-    }
-    .ro-swiper-content-wrap {
-        display: inline-block;
-        top: 0;
     }
     .ro-swiper-content {
         width: 100%;
