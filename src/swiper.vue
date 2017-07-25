@@ -84,6 +84,10 @@
                  * 过渡效果是否启用
                  */
                 transition: false,
+                /**
+                 * 定时器
+                 */
+                handler: null,
             };
         },
         computed: {
@@ -153,8 +157,17 @@
             },
         },
         mounted() {
-            this.width = window.innerWidth;
-            this.translate = -window.innerWidth;
+            const vm = this;
+            vm.width = window.innerWidth;
+            vm.translate = -window.innerWidth;
+            if (vm.autoplay) {
+                // 启动定时器
+                vm.handler = setInterval(function() {
+                    vm.transition = true;
+                    vm.translate -= vm.width;
+                    vm.onTouchRange();
+                }, vm.duration);
+            }
         },
         render(h) {
             const slides = this.slides;
