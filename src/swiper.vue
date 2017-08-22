@@ -208,6 +208,9 @@
 </script>
 
 <style>
+    .ro-swiper-container {
+        overflow: hidden;
+    }
     .ro-swiper.transition {
         transition: transform 0.3s;
     }
