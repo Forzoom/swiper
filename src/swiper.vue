@@ -65,6 +65,13 @@
                 type: Boolean,
                 default: false,
             },
+            /**
+             * 是否循环显示
+             */
+            loop: {
+                type: Boolean,
+                default: true,
+            },
         },
         data() {
             return {
@@ -101,13 +108,20 @@
                 return this.slides.length;
             },
             slides() {
-                const slides = this.$slots.default.filter(function(vnode) {
+                // 确认$slots存在
+                const defaultSlots = this.$slots.default || [];
+                const slides = defaultSlots.filter(function(vnode) {
                     return vnode != null && vnode.tag != null && vnode.tag.indexOf('SwiperSlide') != -1;
                 });
-                const firstVNode = cloneVNode(slides[0]);
-                const lastVNode = cloneVNode(slides[slides.length - 1]);
-                slides.push(firstVNode);
-                slides.unshift(lastVNode);
+                if (!this.loop) {
+                    return slides;
+                }
+                if (slides.length > 0) {
+                    const firstVNode = cloneVNode(slides[0]);
+                    const lastVNode = cloneVNode(slides[slides.length - 1]);
+                    slides.push(firstVNode);
+                    slides.unshift(lastVNode);
+                }
                 return slides;
             },
         },
@@ -137,6 +151,10 @@
             },
             onTouchRange() {
                 const vm = this;
+                // 不做循环的情况下，直接返回
+                if (!this.loop) {
+                    return;
+                }
                 if (vm.translate === 0 || vm.translate === vm.rangeMin) {
                     vm.$nextTick(function() {
                         vm.transition = false;
@@ -159,7 +177,10 @@
         mounted() {
             const vm = this;
             vm.width = window.innerWidth;
-            vm.translate = -window.innerWidth;
+            vm.translate = 0;
+            if (this.loop) {
+                vm.translate = -window.innerWidth
+            }
             if (vm.autoplay) {
                 // 启动定时器
                 vm.handler = setInterval(function() {

@@ -1,6 +1,5 @@
 <template>
-    <div
-        class="ro-swiper-content-wrap">
+    <div class="ro-swiper-content-wrap" :class="slideClass">
         <slot></slot>
     </div>
 </template>
@@ -8,6 +7,14 @@
 <script>
     export default {
         name: 'SwiperSlide',
+        props: {
+            slideClass: {
+                type: [
+                    Object,
+                    Array,
+                ],
+            },
+        },
     };
 </script>
 
