@@ -72,6 +72,13 @@
                 type: Boolean,
                 default: true,
             },
+            /**
+             * 默认从0开始
+             */
+            value: {
+                type: Number,
+                default: 0,
+            },
         },
         data() {
             return {
@@ -115,46 +122,79 @@
                 });
                 if (!this.loop) {
                     return slides;
+                } else {
+                    if (slides.length > 0) {
+                        const firstVNode = cloneVNode(slides[0]);
+                        const lastVNode = cloneVNode(slides[slides.length - 1]);
+                        slides.push(firstVNode);
+                        slides.unshift(lastVNode);
+                    }
+                    return slides;
                 }
-                if (slides.length > 0) {
-                    const firstVNode = cloneVNode(slides[0]);
-                    const lastVNode = cloneVNode(slides[slides.length - 1]);
-                    slides.push(firstVNode);
-                    slides.unshift(lastVNode);
-                }
-                return slides;
+            },
+            /**
+             * 当前选中的index
+             */
+            selectedIndex() {
+                return parseInt(this.translate / this.width);
+            },
+        },
+        watch: {
+            selectedIndex(val) {
+                this.$emit('input', Math.abs(val));
             },
         },
         methods: {
+            /**
+             * 点击触发
+             */
             onTouchDown() {
                 if (!this.isMount) {
                     this.mount();
                 }
                 this.transition = false;
             },
+            /**
+             * 移动触发
+             */
             onTouchMove({ x, y, }) {
                 // 需求屏幕的宽度
                 this.translate = range(this.translate + x, this.rangeMin, 0);
             },
+            /**
+             * 释放触发
+             */
             onTouchUp(startPos, currentPos) {
                 this.transition = true;
             },
+            /**
+             * slide处理
+             */
             onTouchSlide() {
                 const vm = this;
                 vm.translate = range(round(vm.translate, 0, vm.width), vm.rangeMin, 0);
                 vm.onTouchRange();
             },
+            /**
+             * fling处理
+             */
             onTouchFling({ speedX, }) {
                 const vm = this;
                 vm.translate = range(round(vm.translate + 0.5 * (speedX > 0 ? vm.width : -vm.width), 0, vm.width), vm.rangeMin, 0);
                 vm.onTouchRange();
             },
+            /**
+             * 当达到边界的情况下
+             */
             onTouchRange() {
                 const vm = this;
+
                 // 不做循环的情况下，直接返回
                 if (!this.loop) {
                     return;
                 }
+
+                // 当达到边界的情况下，可能需要进行循环
                 if (vm.translate === 0 || vm.translate === vm.rangeMin) {
                     vm.$nextTick(function() {
                         vm.transition = false;
@@ -173,21 +213,39 @@
                 this.width = window.innerWidth;
                 this.isMount = true;
             },
-        },
-        mounted() {
-            const vm = this;
-            vm.width = window.innerWidth;
-            vm.translate = 0;
-            if (this.loop) {
-                vm.translate = -window.innerWidth
-            }
-            if (vm.autoplay) {
+            /**
+             * 启动
+             */
+            play() {
                 // 启动定时器
                 vm.handler = setInterval(function() {
                     vm.transition = true;
                     vm.translate -= vm.width;
                     vm.onTouchRange();
                 }, vm.duration);
+            },
+            /**
+             * 结束
+             */
+            stop() {
+                clearInterval(vm.handler);
+                vm.handler = null;
+            },
+        },
+        mounted() {
+            const vm = this;
+            vm.width = window.innerWidth;
+
+            // 设置默认开始位置
+            if (this.loop) {
+                vm.translate = -(this.value + 1) * vm.width;
+            } else {
+                vm.translate = -this.value * vm.width;
+            }
+
+            // 启动循环
+            if (vm.autoplay) {
+                this.play();
             }
         },
         render(h) {
@@ -220,6 +278,7 @@
                     },
                 }, slides),
             ]);
+
             const el = h('div', {
                 'class': ['ro-swiper-container'],
             }, [touch]);
