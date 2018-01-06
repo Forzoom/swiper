@@ -157,9 +157,11 @@
             /**
              * 移动触发
              */
-            onTouchMove({ x, y, }) {
-                // 需求屏幕的宽度
-                this.translate = range(this.translate + x, this.rangeMin, 0);
+            onTouchMove({ x, y, startMoveCoordinate, moveCoordinate, }) {
+                if (startMoveCoordinate === 'x') {
+                    // 需求屏幕的宽度
+                    this.translate = range(this.translate + x, this.rangeMin, 0);
+                }
             },
             /**
              * 释放触发

@@ -46,3 +46,8 @@ Vue.use(Swiper); // will register components 'ROSwiper' and 'ROSwiperSlide'
 
 1. 优化代码逻辑
 1. 添加input事件，值为当前的slide的index
+
+#### 0.0.9
+
+1. 更新touch
+1. 限制move事件中同时出现两个方向的滑动
