@@ -51,3 +51,7 @@ Vue.use(Swiper); // will register components 'ROSwiper' and 'ROSwiperSlide'
 
 1. 更新touch
 1. 限制move事件中同时出现两个方向的滑动
+
+#### 0.0.10
+
+1. swiper-slide添加vertical-align: top

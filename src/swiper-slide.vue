@@ -21,6 +21,6 @@
 <style>
     .ro-swiper-content-wrap {
         display: inline-block;
-        top: 0;
+        vertical-align: top;
     }
 </style>
